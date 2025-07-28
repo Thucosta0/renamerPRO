@@ -194,7 +194,3 @@ conversor-danfe/
 
 © 2025 ThTweaks 
 Sistema desenvolvido internamente para uso Fiscal.
-
----
-
-⚕️ **"Excelência em Tecnologia da Informação Hospitalar"** 

@@ -4,19 +4,6 @@
 ![License](https://img.shields.io/badge/license-Proprietary-red.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![Status](https://img.shields.io/badge/status-Production-green.svg)
----
-
-## 📋 **Índice**
-
-- [Visão Geral](#-visão-geral)
-- [Características Principais](#-características-principais)
-- [Requisitos do Sistema](#-requisitos-do-sistema)
-- [Instalação](#-instalação)
-- [Guia de Uso](#-guia-de-uso)
-- [Arquitetura Técnica](#-arquitetura-técnica)
-- [Build e Distribuição](#-build-e-distribuição)
-- [Suporte e Manutenção](#-suporte-e-manutenção)
-- [Licença e Copyright](#-licença-e-copyright)
 
 ---
 

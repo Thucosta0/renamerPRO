@@ -57,28 +57,6 @@ O **renamerPRO©** é uma solução corporativa desenvolvida para atender às ne
 
 ---
 
-## 📚 **Guia de Uso**
-
-### **1. Processamento em Massa**
-1. **Configuração**: Selecione pasta origem (XMLs) e destino (PDFs)
-2. **Escaneamento**: Sistema identifica automaticamente arquivos válidos
-3. **Processamento**: Execute conversão em lote com acompanhamento em tempo real
-4. **Relatório**: Receba relatório detalhado com estatísticas completas
-
-### **2. Renomeação Inteligente**
-1. **Seleção**: Escolha pasta com arquivos XML
-2. **Configuração**: Defina padrões de renomeação personalizados
-3. **Validação**: Sistema verifica chaves NFe automaticamente
-4. **Execução**: Aplique renomeação com backup automático
-
-### **3. Processamento por Lote**
-1. **Entrada de Dados**: Insira múltiplas chaves NFe simultaneamente
-2. **Validação**: Sistema verifica formato e validade
-3. **Processamento**: Conversão automática para DANFE
-4. **Exportação**: Documentos prontos para arquivo
-
----
-
 ## 🏗️ **Arquitetura Técnica**
 
 ### **Componentes Principais**
@@ -93,20 +71,7 @@ O **renamerPRO©** é uma solução corporativa desenvolvida para atender às ne
 3. **Validação**: Verificação de integridade dos PDFs gerados
 4. **Saída**: Documentos DANFE padronizados e relatórios
 
-### **Otimizações Implementadas**
-- Pool de threads otimizado para CPU
-- Gestão eficiente de memória
-- Cache inteligente de operações
-- Logs estruturados para debugging
-
 ---
-
-### **Suporte Técnico**
-Para suporte técnico, entre em contato com a equipe de desenvolvimento. (thucosta)
-
----
-
-## ⚖️ **Licença e Copyright**
 
 ### **Copyright e Propriedade Intelectual**
 
@@ -147,39 +112,18 @@ Este software é fornecido "como está", sem garantias expressas ou implícitas.
 conversor-danfe/
 ├── danfe_app.py          # Aplicação principal
 ├── gerador_danfe.php     # Engine PHP com rastro
-├── teste_rastro.php      # Arquivo de teste de rastro
 ├── build_exe.py          # Script de build
 ├── requirements.txt      # Dependências Python
 ├── composer.json         # Dependências PHP
 ├── php/                  # Runtime PHP portável
 ├── vendor/               # Bibliotecas PHP (NFePHP)
-└── README.md            # Esta documentação
+└── README.md             # Esta documentação
 ```
-### Benefícios:
-- Maior segurança no controle de medicamentos
-- Rastreabilidade completa do produto
-- Conformidade regulatória automática
-- Redução de erros manuais
-- Documentação auditável
-
-## 🛠️ Desenvolvimento
-
-### Arquitetura:
-- **Frontend**: CustomTkinter (Python)
-- **Backend**: Threading + XML Processing
-- **Engine PDF**: NFePHP + TCPDF
-- **Dados**: XML NFe + Processamento PHP
-
-### Customizações:
-- Tema hospitalar personalizado
-- Processamento paralelo otimizado
-- Validação rigorosa de chaves NFe
-- Logs detalhados para auditoria
 
 ## 📊 Performance
 
 - **Processamento**: 5 XMLs simultâneos
-- **Velocidade**: ~2-3s por documento
+- **Velocidade**: ~1-2,5s por documento
 - **Memória**: 512MB máximo
 - **Formatos**: XML → PDF (A4 padrão Receita Federal)
 

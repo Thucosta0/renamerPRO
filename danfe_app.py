@@ -8,53 +8,70 @@ import webbrowser
 import time
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import pandas as pd
+from datetime import datetime
+from openpyxl.styles import Font, PatternFill, Alignment
 
 
 class DanfeAppMassa:
     def __init__(self):
-        # Configuração de tema e cores 
-        ctk.set_appearance_mode("light")  # Tema claro para ambiente hospitalar
-        ctk.set_default_color_theme("blue")
-        
-        # Paleta de cores renamerPRO© (suavizada)
-        self.cores = {
-            'azul_primary': '#003D7A',     # Azul principal
-            'azul_secondary': '#0056B3',   # Azul secundário
-            'azul_light': '#E3F2FD',       # Azul claro suavizado
-            'azul_accent': '#1976D2',      # Azul accent mais suave
-            'cinza_text': '#37474F',       # Cinza textos mais suave
-            'cinza_light': '#F5F7FA',      # Cinza claro suavizado
-            'cinza_medium': '#ECEFF1',     # Cinza médio para cards
-            'verde_success': '#2E7D32',    # Verde mais suave
-            'laranja_warning': '#F57C00',  # Laranja mais suave
-            'vermelho_error': '#C62828',   # Vermelho mais discreto
-            'branco_suave': '#FAFBFC'      # Branco suavizado
-        }
-        
-        self.root = ctk.CTk()
-        self.root.title("⚕️ renamerPRO©")
-        self.root.geometry("1000x650")
-        self.root.minsize(800, 600)
-        self.root.resizable(True, True)
-        self.root.configure(fg_color=self.cores['cinza_medium'])
-        
-        # Configurar título profissional
-        # Sem ícone personalizado - usando ícone padrão do sistema
-        
-        # Configurar grid responsivo
-        self.root.grid_columnconfigure(0, weight=1)
-        self.root.grid_rowconfigure(0, weight=1)
-        
-        self.pasta_xml = tk.StringVar()
-        self.pasta_saida = tk.StringVar()
-        self.status_texto = tk.StringVar(value="Sistema pronto para processamento")
-        self.arquivos_xml = []
-        self.processando = False
-        self.chaves_xml = {}
-        self.linhas_renomeacao = []
-
-        
-        self.criar_interface()
+        try:
+            # Configuração de tema e cores 
+            ctk.set_appearance_mode("light")  # Tema claro para ambiente hospitalar
+            ctk.set_default_color_theme("blue")
+            
+            # Paleta de cores renamerPRO© (suavizada)
+            self.cores = {
+                'azul_primary': '#003D7A',     # Azul principal
+                'azul_secondary': '#0056B3',   # Azul secundário
+                'azul_light': '#E3F2FD',       # Azul claro suavizado
+                'azul_accent': '#1976D2',      # Azul accent mais suave
+                'cinza_text': '#37474F',       # Cinza textos mais suave
+                'cinza_light': '#F5F7FA',      # Cinza claro suavizado
+                'cinza_medium': '#ECEFF1',     # Cinza médio para cards
+                'verde_success': '#2E7D32',    # Verde mais suave
+                'laranja_warning': '#F57C00',  # Laranja mais suave
+                'vermelho_error': '#C62828',   # Vermelho mais discreto
+                'branco_suave': '#FAFBFC'      # Branco suavizado
+            }
+            
+            # Criar janela principal primeiro
+            self.root = ctk.CTk()
+            self.root.title("⚕️ renamerPRO©")
+            self.root.geometry("1300x600")
+            self.root.minsize(800, 600)
+            self.root.resizable(True, True)
+            self.root.configure(fg_color=self.cores['cinza_medium'])
+            
+            # Inicializar variáveis após criar a janela
+            self.pasta_xml = tk.StringVar()
+            self.pasta_saida = tk.StringVar()
+            self.status_texto = tk.StringVar(value="Sistema pronto para processamento")
+            self.arquivos_xml = []
+            self.processando = False
+            self.chaves_xml = {}
+            self.linhas_renomeacao = []
+            
+            # Configurar grid responsivo
+            self.root.grid_columnconfigure(0, weight=1)
+            self.root.grid_rowconfigure(0, weight=1)
+            
+            # Aguardar a janela estar pronta
+            self.root.update_idletasks()
+            
+            # Criar interface
+            self.criar_interface()
+            
+            print("✅ Aplicação inicializada com sucesso")
+            
+        except Exception as e:
+            print(f"❌ Erro na inicialização: {e}")
+            if hasattr(self, 'root'):
+                try:
+                    messagebox.showerror("Erro de Inicialização", f"Erro ao inicializar a aplicação:\n{str(e)}")
+                except:
+                    pass
+            raise
 
     def criar_botao_profissional(self, parent, text, command, width=200, height=45, 
                                 cor_principal=None, cor_hover=None, icone=""):
@@ -339,7 +356,7 @@ class DanfeAppMassa:
             corner_radius=8,
             fg_color=self.cores['cinza_medium'],
             text_color=self.cores['cinza_text'],
-            height=200
+            height=120
         )
         self.log_text.pack(fill="both", expand=True, padx=8, pady=8)
         
@@ -425,6 +442,39 @@ class DanfeAppMassa:
         )
         btn_pasta_renomear.grid(row=0, column=1)
         
+        # Pasta de Saída
+        saida_label = ctk.CTkLabel(
+            config_frame,
+            text="💾 Pasta de Destino (Opcional):",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=self.cores['cinza_text'],
+            anchor="w"
+        )
+        saida_label.grid(row=2, column=0, sticky="ew", pady=(15, 5))
+        
+        saida_container = ctk.CTkFrame(config_frame, fg_color="transparent")
+        saida_container.grid(row=3, column=0, sticky="ew")
+        saida_container.grid_columnconfigure(0, weight=1)
+        
+        self.entrada_pasta_saida_renomear = ctk.CTkEntry(
+            saida_container,
+            placeholder_text="Deixe vazio para usar a mesma pasta dos XMLs...",
+            font=ctk.CTkFont(size=12),
+            height=40,
+            corner_radius=8,
+            border_color=self.cores['azul_light']
+        )
+        self.entrada_pasta_saida_renomear.grid(row=0, column=0, sticky="ew", padx=(0, 10))
+        
+        btn_saida_renomear = self.criar_botao_profissional(
+            saida_container,
+            "Selecionar",
+            self.selecionar_pasta_saida_renomear,
+            width=120,
+            icone="💾"
+        )
+        btn_saida_renomear.grid(row=0, column=1)
+        
         # Controles avançados
         controles_card = self.criar_card_profissional(
             container,
@@ -487,6 +537,18 @@ class DanfeAppMassa:
             icone="🧹"
         )
         self.btn_limpar_dados.pack(side="left", padx=8)
+        
+        self.btn_exportar_excel = self.criar_botao_profissional(
+            linha1,
+            "EXPORTAR EXCEL",
+            self.exportar_para_excel,
+            width=150,
+            height=40,
+            cor_principal="#28A745",
+            cor_hover="#218838",
+            icone="📊"
+        )
+        self.btn_exportar_excel.pack(side="left", padx=8)
         
         # Segunda linha de botões (ações principais)
         linha2 = ctk.CTkFrame(botoes_container, fg_color="transparent")
@@ -590,7 +652,7 @@ class DanfeAppMassa:
         self.log_renomeacao = ctk.CTkTextbox(
             log_renomear_card,
             font=ctk.CTkFont(size=11, family="Consolas"),
-            height=150,
+            height=100,
             corner_radius=8,
             fg_color=self.cores['cinza_medium'],
             text_color=self.cores['cinza_text']
@@ -601,6 +663,9 @@ class DanfeAppMassa:
         self.log_renomeacao.insert("0.0", """renamerPRO©
 📋 Aguardando configuração de diretório...
 💡 Selecione o diretório e escaneie as chaves para começar.""")
+        
+        # Adicionar uma linha inicial para garantir visibilidade da tabela
+        self.adicionar_linha_renomeacao()
 
     def adicionar_linha_renomeacao(self):
         # Container responsivo para linha
@@ -680,10 +745,46 @@ class DanfeAppMassa:
                 break
                 
     def selecionar_pasta_renomear(self):
-        pasta = filedialog.askdirectory(title="Selecione a pasta com XMLs para renomear")
-        if pasta:
-            self.entrada_pasta_renomear.delete(0, 'end')
-            self.entrada_pasta_renomear.insert(0, pasta)
+        try:
+            # Verificar se a janela principal está disponível
+            if not self.root or not self.root.winfo_exists():
+                messagebox.showerror("Erro", "Janela principal não está disponível")
+                return
+                
+            # Forçar atualização da janela antes de abrir o diálogo
+            self.root.update_idletasks()
+            
+            pasta = filedialog.askdirectory(
+                title="Selecione a pasta com XMLs para renomear",
+                parent=self.root,
+                mustexist=True
+            )
+            
+            if pasta and os.path.exists(pasta):
+                self.entrada_pasta_renomear.delete(0, 'end')
+                self.entrada_pasta_renomear.insert(0, pasta)
+                self.log_renomeacao.delete("0.0", "end")
+                self.log_renomeacao.insert("0.0", f"📁 Pasta selecionada: {pasta}\n💡 Clique em 'ESCANEAR CHAVES' para continuar.")
+                
+        except tk.TclError as e:
+            print(f"Erro TclError no seletor de pasta: {e}")
+            # Tentar método alternativo
+            try:
+                import tkinter.simpledialog as simpledialog
+                pasta = simpledialog.askstring(
+                    "Pasta XML", 
+                    "Digite o caminho da pasta com XMLs:",
+                    parent=self.root
+                )
+                if pasta and os.path.exists(pasta):
+                    self.entrada_pasta_renomear.delete(0, 'end')
+                    self.entrada_pasta_renomear.insert(0, pasta)
+            except Exception:
+                messagebox.showerror("Erro", "Não foi possível abrir o seletor de pasta.\nDigite o caminho manualmente no campo.")
+                
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao abrir seletor de pasta: {str(e)}")
+            print(f"Erro no seletor de pasta: {e}")
             
     def escanear_chaves_xml(self):
         pasta = self.entrada_pasta_renomear.get()
@@ -749,6 +850,112 @@ class DanfeAppMassa:
             
         except Exception:
             return None
+    
+    def extrair_valor_total_xml(self, caminho_arquivo):
+        """Extrai o valor total da NFe do XML"""
+        try:
+            tree = ET.parse(caminho_arquivo)
+            root = tree.getroot()
+            
+            # Buscar valor total em diferentes locais possíveis
+            namespaces = {'nfe': 'http://www.portalfiscal.inf.br/nfe'}
+            
+            # Tentar encontrar o valor total
+            valor_elem = root.find('.//nfe:vNF', namespaces)
+            if valor_elem is not None:
+                return f"R$ {float(valor_elem.text):.2f}"
+                
+            # Tentar sem namespace
+            valor_elem = root.find('.//vNF')
+            if valor_elem is not None:
+                return f"R$ {float(valor_elem.text):.2f}"
+                
+            return None
+            
+        except Exception:
+            return None
+    
+    def extrair_numero_nf_xml(self, caminho_arquivo):
+        """Extrai o número da NFe do XML"""
+        try:
+            tree = ET.parse(caminho_arquivo)
+            root = tree.getroot()
+            
+            # Buscar número da NF em diferentes locais possíveis
+            namespaces = {'nfe': 'http://www.portalfiscal.inf.br/nfe'}
+            
+            # Tentar encontrar o número da NF
+            numero_elem = root.find('.//nfe:nNF', namespaces)
+            if numero_elem is not None:
+                return numero_elem.text
+                
+            # Tentar sem namespace
+            numero_elem = root.find('.//nNF')
+            if numero_elem is not None:
+                return numero_elem.text
+                
+            return None
+            
+        except Exception:
+            return None
+    
+    def extrair_numero_pedido_xml(self, caminho_arquivo):
+        """Extrai o número do pedido (xPed) do XML"""
+        try:
+            tree = ET.parse(caminho_arquivo)
+            root = tree.getroot()
+            
+            # Buscar xPed em diferentes locais possíveis
+            namespaces = {'nfe': 'http://www.portalfiscal.inf.br/nfe'}
+            
+            # Tentar encontrar o xPed (pode estar em qualquer item da nota)
+            pedido_elem = root.find('.//nfe:xPed', namespaces)
+            if pedido_elem is not None:
+                return pedido_elem.text
+                
+            # Tentar sem namespace
+            pedido_elem = root.find('.//xPed')
+            if pedido_elem is not None:
+                return pedido_elem.text
+                
+            return None
+            
+        except Exception:
+            return None
+    
+    def extrair_numero_fornecedor_xml(self, caminho_arquivo):
+        """Extrai o número do fornecedor (CNPJ/CPF do emitente) do XML"""
+        try:
+            tree = ET.parse(caminho_arquivo)
+            root = tree.getroot()
+            
+            # Buscar CNPJ/CPF do emitente em diferentes locais possíveis
+            namespaces = {'nfe': 'http://www.portalfiscal.inf.br/nfe'}
+            
+            # Tentar encontrar CNPJ do emitente
+            cnpj_elem = root.find('.//nfe:emit/nfe:CNPJ', namespaces)
+            if cnpj_elem is not None:
+                return cnpj_elem.text
+                
+            # Tentar encontrar CPF do emitente
+            cpf_elem = root.find('.//nfe:emit/nfe:CPF', namespaces)
+            if cpf_elem is not None:
+                return cpf_elem.text
+                
+            # Tentar sem namespace - CNPJ
+            cnpj_elem = root.find('.//emit/CNPJ')
+            if cnpj_elem is not None:
+                return cnpj_elem.text
+                
+            # Tentar sem namespace - CPF
+            cpf_elem = root.find('.//emit/CPF')
+            if cpf_elem is not None:
+                return cpf_elem.text
+                
+            return None
+            
+        except Exception:
+            return None
             
     def validar_e_renomear_thread(self):
         # Usar função auxiliar (elimina duplicação)
@@ -764,11 +971,38 @@ class DanfeAppMassa:
             messagebox.showerror("Erro", "Escaneie as chaves primeiro!")
             return
             
+        # Verificar pasta de saída
+        pasta_saida = self.entrada_pasta_saida_renomear.get().strip()
+        if not pasta_saida:
+            messagebox.showerror("Erro", "Selecione a pasta de saída primeiro!")
+            return
+            
+        if not os.path.exists(pasta_saida):
+            messagebox.showerror("Erro", "Pasta de saída não existe!")
+            return
+            
         sucessos = 0
         erros = 0
         
+        # Criar pasta para XMLs não convertidos
+        pasta_nao_convertidos = os.path.join(pasta_saida, "XMLs não convertidos")
+        if not os.path.exists(pasta_nao_convertidos):
+            os.makedirs(pasta_nao_convertidos)
+            
         self.root.after(0, lambda: self.log_renomeacao.insert("end", "\n🚀 INICIANDO VALIDAÇÃO E RENOMEAÇÃO...\n\n"))
+        self.root.after(0, lambda: self.log_renomeacao.insert("end", f"📁 Pasta de saída: {pasta_saida}\n"))
+        self.root.after(0, lambda: self.log_renomeacao.insert("end", f"📁 XMLs não convertidos: {pasta_nao_convertidos}\n\n"))
         
+        # Coletar chaves que serão convertidas
+        chaves_para_converter = set()
+        for linha in self.linhas_renomeacao:
+            chave_original = linha['chave'].get().strip()
+            nome_final = linha['nome'].get().strip()
+            
+            if chave_original and nome_final:
+                chaves_para_converter.add(chave_original.strip())
+        
+        # Processar renomeação
         for linha in self.linhas_renomeacao:
             chave_original = linha['chave'].get().strip()
             nome_final = linha['nome'].get().strip()
@@ -795,8 +1029,7 @@ class DanfeAppMassa:
             # Renomear arquivo
             try:
                 arquivo_original = self.chaves_xml[chave]
-                pasta_arquivo = os.path.dirname(arquivo_original)
-                novo_nome = os.path.join(pasta_arquivo, f"{nome_final}.xml")
+                novo_nome = os.path.join(pasta_saida, f"{nome_final}.xml")
                 
                 if os.path.exists(novo_nome):
                     self.root.after(0, lambda l=linha: l['status'].configure(text="❌ Existe"))
@@ -804,27 +1037,210 @@ class DanfeAppMassa:
                     erros += 1
                     continue
                     
-                os.rename(arquivo_original, novo_nome)
+                # Copiar arquivo para pasta de saída com novo nome
+                import shutil
+                shutil.copy2(arquivo_original, novo_nome)
+                
                 self.root.after(0, lambda l=linha: l['status'].configure(text="✅ OK"))
                 self.root.after(0, lambda o=os.path.basename(arquivo_original), n=nome_final: 
                               self.log_renomeacao.insert("end", f"✅ {o} → {n}.xml\n"))
                 sucessos += 1
-                
-                # Atualizar o dicionário
-                self.chaves_xml[chave] = novo_nome
                 
             except Exception as e:
                 self.root.after(0, lambda l=linha: l['status'].configure(text="❌ Erro"))
                 self.root.after(0, lambda e=str(e): self.log_renomeacao.insert("end", f"❌ Erro: {e}\n"))
                 erros += 1
                 
+        # Mover XMLs não convertidos para pasta específica
+        xmls_nao_convertidos = 0
+        for chave, arquivo_original in self.chaves_xml.items():
+            if chave not in chaves_para_converter:
+                try:
+                    nome_arquivo = os.path.basename(arquivo_original)
+                    destino = os.path.join(pasta_nao_convertidos, nome_arquivo)
+                    
+                    # Evitar sobrescrever arquivos
+                    contador = 1
+                    while os.path.exists(destino):
+                        nome_base, ext = os.path.splitext(nome_arquivo)
+                        destino = os.path.join(pasta_nao_convertidos, f"{nome_base}_{contador}{ext}")
+                        contador += 1
+                    
+                    import shutil
+                    shutil.copy2(arquivo_original, destino)
+                    xmls_nao_convertidos += 1
+                    
+                except Exception as e:
+                    self.root.after(0, lambda e=str(e): self.log_renomeacao.insert("end", f"❌ Erro ao mover XML não convertido: {e}\n"))
+        
+        # Excluir XMLs originais convertidos
+        xmls_excluidos = 0
+        for linha in self.linhas_renomeacao:
+            chave_original = linha['chave'].get().strip()
+            if chave_original and linha['status'].cget('text') == "✅ OK":
+                chave = chave_original.strip()
+                if chave in self.chaves_xml:
+                    try:
+                        arquivo_original = self.chaves_xml[chave]
+                        os.remove(arquivo_original)
+                        xmls_excluidos += 1
+                        self.root.after(0, lambda a=os.path.basename(arquivo_original): 
+                                      self.log_renomeacao.insert("end", f"🗑️ Excluído: {a}\n"))
+                    except Exception as e:
+                        self.root.after(0, lambda e=str(e): self.log_renomeacao.insert("end", f"❌ Erro ao excluir: {e}\n"))
+                
         self.root.after(0, lambda: self.log_renomeacao.insert("end", f"\n🎉 RENOMEAÇÃO CONCLUÍDA!\n"))
-        self.root.after(0, lambda: self.log_renomeacao.insert("end", f"✅ Sucessos: {sucessos}\n"))
+        self.root.after(0, lambda: self.log_renomeacao.insert("end", f"✅ XMLs convertidos: {sucessos}\n"))
+        self.root.after(0, lambda: self.log_renomeacao.insert("end", f"📁 XMLs não convertidos movidos: {xmls_nao_convertidos}\n"))
+        self.root.after(0, lambda: self.log_renomeacao.insert("end", f"🗑️ XMLs originais excluídos: {xmls_excluidos}\n"))
         self.root.after(0, lambda: self.log_renomeacao.insert("end", f"❌ Erros: {erros}\n"))
         self.root.after(0, lambda: self.log_renomeacao.see("end"))
         
         if sucessos > 0:
-            messagebox.showinfo("Concluído!", f"Renomeação finalizada!\n\n✅ {sucessos} arquivos renomeados\n❌ {erros} erros")
+            resposta = messagebox.askyesno(
+                "Concluído!", 
+                f"Renomeação finalizada!\n\n✅ {sucessos} XMLs convertidos\n📁 {xmls_nao_convertidos} XMLs não convertidos movidos\n🗑️ {xmls_excluidos} XMLs originais excluídos\n❌ {erros} erros\n\nDeseja abrir a pasta de saída?"
+            )
+            
+            if resposta:
+                try:
+                    os.startfile(pasta_saida)
+                except:
+                    import webbrowser
+                    webbrowser.open(pasta_saida)
+    
+    def exportar_para_excel(self):
+        """Exporta os dados dos XMLs da pasta selecionada para um arquivo Excel"""
+        try:
+            # Verificar se há pasta selecionada
+            pasta = self.entrada_pasta_renomear.get()
+            if not pasta:
+                messagebox.showerror("Erro", "Selecione a pasta com XMLs primeiro!")
+                return
+            
+            # Escanear todos os XMLs da pasta
+            arquivos_xml = self.escanear_xmls_pasta(pasta)
+            
+            if not arquivos_xml:
+                messagebox.showwarning("Aviso", "Nenhum arquivo XML encontrado na pasta selecionada!")
+                return
+            
+            # Coletar dados dos XMLs
+            dados_tabela = []
+            self.log_renomeacao.insert("end", f"\n🔍 ESCANEANDO XMLs PARA EXPORTAÇÃO...\n")
+            self.log_renomeacao.insert("end", f"📁 Pasta: {pasta}\n")
+            self.log_renomeacao.insert("end", f"📊 Total de XMLs: {len(arquivos_xml)}\n\n")
+            
+            for i, arquivo_xml in enumerate(arquivos_xml, 1):
+                try:
+                    nome_arquivo = os.path.basename(arquivo_xml)
+                    chave = self.extrair_chave_xml(arquivo_xml)
+                    valor_total = self.extrair_valor_total_xml(arquivo_xml)
+                    numero_nf = self.extrair_numero_nf_xml(arquivo_xml)
+                    numero_pedido = self.extrair_numero_pedido_xml(arquivo_xml)
+                    numero_fornecedor = self.extrair_numero_fornecedor_xml(arquivo_xml)
+                    
+                    # Verificar se existe na tabela de mapeamento
+                    status_conversao = "Não mapeado"
+                    nome_personalizado = ""
+                    
+                    for linha in self.linhas_renomeacao:
+                        if linha['chave'].get().strip() == chave:
+                            status_conversao = linha['status'].cget('text')
+                            nome_personalizado = linha['nome'].get().strip()
+                            break
+                    
+                    dados_tabela.append({
+                        'N° NF': numero_nf or i,
+                        'CNPJ fornecedor': numero_fornecedor or 'Não encontrado',
+                        'N° Pedido': numero_pedido or 'Não encontrado',
+                        'V. TOTAL DA NOTA': valor_total or '',
+                        'Nome do Arquivo': nome_personalizado or nome_arquivo,
+                        'Data/Hora Exportação': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
+                        'Chave de acesso': chave or 'Não encontrada',
+                    })
+                    
+                    self.log_renomeacao.insert("end", f"✅ {nome_arquivo}\n")
+                    
+                except Exception as e:
+                    self.log_renomeacao.insert("end", f"❌ Erro em {os.path.basename(arquivo_xml)}: {str(e)}\n")
+                    continue
+            
+            # Solicitar local para salvar
+            try:
+                arquivo_excel = filedialog.asksaveasfilename(
+                    title="Salvar planilha Excel",
+                    defaultextension=".xlsx",
+                    filetypes=[("Arquivos Excel", "*.xlsx"), ("Todos os arquivos", "*.*")],
+                    initialfile=f"renamerPRO_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                    parent=self.root
+                )
+            except Exception as e:
+                messagebox.showerror("Erro", f"Erro ao abrir seletor de arquivo: {str(e)}")
+                return
+            
+            if not arquivo_excel:
+                return
+            
+            # Criar DataFrame e exportar
+            df = pd.DataFrame(dados_tabela)
+            
+            # Configurar o Excel com formatação
+            with pd.ExcelWriter(arquivo_excel, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name='Mapeamento NFe', index=False)
+                
+                # Obter a planilha para formatação
+                worksheet = writer.sheets['Mapeamento NFe']
+                
+                # Ajustar largura das colunas
+                for column in worksheet.columns:
+                    max_length = 0
+                    column_letter = column[0].column_letter
+                    
+                    for cell in column:
+                        try:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(str(cell.value))
+                        except:
+                            pass
+                    
+                    adjusted_width = min(max_length + 2, 50)
+                    worksheet.column_dimensions[column_letter].width = adjusted_width
+                
+                # Aplicar formatação ao cabeçalho
+                header_font = Font(bold=True, color="FFFFFF")
+                header_fill = PatternFill(start_color="003D7A", end_color="003D7A", fill_type="solid")
+                header_alignment = Alignment(horizontal="center", vertical="center")
+                
+                for cell in worksheet[1]:
+                    cell.font = header_font
+                    cell.fill = header_fill
+                    cell.alignment = header_alignment
+            
+            # Log da exportação
+            self.log_renomeacao.insert("end", f"\n📊 EXPORTAÇÃO PARA EXCEL:\n")
+            self.log_renomeacao.insert("end", f"✅ {len(dados_tabela)} registros exportados\n")
+            self.log_renomeacao.insert("end", f"📁 Arquivo: {os.path.basename(arquivo_excel)}\n")
+            self.log_renomeacao.insert("end", f"📅 Data: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n")
+            self.log_renomeacao.see("end")
+            
+            # Perguntar se deseja abrir o arquivo
+            resposta = messagebox.askyesno(
+                "Exportação Concluída!", 
+                f"✅ Dados exportados com sucesso!\n\n📊 {len(dados_tabela)} registros salvos\n📁 {os.path.basename(arquivo_excel)}\n\nDeseja abrir o arquivo Excel?"
+            )
+            
+            if resposta:
+                try:
+                    os.startfile(arquivo_excel)
+                except:
+                    webbrowser.open(arquivo_excel)
+                    
+        except Exception as e:
+            error_msg = f"Erro ao exportar para Excel: {str(e)}"
+            messagebox.showerror("Erro na Exportação", error_msg)
+            self.log_renomeacao.insert("end", f"\n❌ ERRO NA EXPORTAÇÃO: {error_msg}\n")
+            self.log_renomeacao.see("end")
     
     def limpar_dados_massa(self):
         resposta = messagebox.askyesno(
@@ -994,16 +1410,43 @@ class DanfeAppMassa:
         self.log_text.insert("0.0", log_inicial)
         
     def selecionar_pasta_xml(self):
-        pasta = filedialog.askdirectory(title="Selecione a pasta com os XMLs")
-        if pasta:
-            self.pasta_xml.set(pasta)
-            self.status_texto.set(f"Pasta XML selecionada: {os.path.basename(pasta)}")
-            self.btn_escanear.configure(state="normal")
+        try:
+            pasta = filedialog.askdirectory(
+                title="Selecione a pasta com os XMLs",
+                parent=self.root
+            )
+            if pasta:
+                self.pasta_xml.set(pasta)
+                self.status_texto.set(f"Pasta XML selecionada: {os.path.basename(pasta)}")
+                self.btn_escanear.configure(state="normal")
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao abrir seletor de pasta: {str(e)}")
+            print(f"Erro no seletor de pasta XML: {e}")
                         
     def selecionar_pasta_saida(self):
-        pasta = filedialog.askdirectory(title="Selecione a pasta para salvar os PDFs")
-        if pasta:
-            self.pasta_saida.set(pasta)
+        try:
+            pasta = filedialog.askdirectory(
+                title="Selecione a pasta para salvar os PDFs",
+                parent=self.root
+            )
+            if pasta:
+                self.pasta_saida.set(pasta)
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao abrir seletor de pasta: {str(e)}")
+            print(f"Erro no seletor de pasta de saída: {e}")
+            
+    def selecionar_pasta_saida_renomear(self):
+        try:
+            pasta = filedialog.askdirectory(
+                title="Selecione a pasta para salvar os XMLs renomeados",
+                parent=self.root
+            )
+            if pasta:
+                self.entrada_pasta_saida_renomear.delete(0, 'end')
+                self.entrada_pasta_saida_renomear.insert(0, pasta)
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao abrir seletor de pasta: {str(e)}")
+            print(f"Erro no seletor de pasta de saída renomear: {e}")
             
     def escanear_pasta(self):
         if not self.pasta_xml.get():

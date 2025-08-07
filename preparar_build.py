@@ -22,6 +22,22 @@ def verificar_dependencias():
         print("💡 Execute: pip install customtkinter")
         return False
     
+    try:
+        import pandas
+        print("✅ Pandas encontrado")
+    except ImportError:
+        print("❌ Pandas não encontrado!")
+        print("💡 Execute: pip install pandas")
+        return False
+    
+    try:
+        import openpyxl
+        print("✅ OpenPyXL encontrado")
+    except ImportError:
+        print("❌ OpenPyXL não encontrado!")
+        print("💡 Execute: pip install openpyxl")
+        return False
+    
     # Verificar PHP
     # Verificar se estamos no diretório correto ou no pai
     if os.path.exists("php/php.exe"):

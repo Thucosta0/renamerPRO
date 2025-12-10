@@ -1,4 +1,4 @@
-#  renamerPRO ©️
+#  renamerAPP
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-Proprietary-red.svg)
@@ -9,7 +9,7 @@
 
 ## 🎯 **Visão Geral**
 
-O **renamerAPP©** é uma solução corporativa desenvolvida para atender às necessidades no processamento de documentos fiscais eletrônicos. O sistema automatiza a conversão de arquivos XML em documentos DANFE padronizados, garantindo conformidade com as normas da Receita Federal e otimização dos processos internos.
+O **renamerAPP** é uma solução corporativa desenvolvida para atender às necessidades no processamento de documentos fiscais eletrônicos. O sistema automatiza a conversão de arquivos XML em documentos DANFE padronizados, garantindo conformidade com as normas da Receita Federal e otimização dos processos internos.
 
 ### **Objetivos Estratégicos**
 
